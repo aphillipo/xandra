@@ -306,6 +306,12 @@ defmodule Xandra.Protocol do
     <<date::32>>
   end
 
+  defp encode_value(:decimal, float) when is_float(float) do
+    encode_value(:decimal, Decimal.new(float))
+  end
+  defp encode_value(:decimal, %Decimal{sign: sign, coef: coef, exp: exp}) do
+    [encode_value(:int, exp), encode_value(:varint, sign * coef)]
+  end
   defp encode_value(:decimal, {value, scale}) do
     [encode_value(:int, scale), encode_value(:varint, value)]
   end

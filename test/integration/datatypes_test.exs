@@ -217,6 +217,41 @@ defmodule DataTypesTest do
     assert Map.fetch!(row, "set_of_tinyint") == nil
   end
 
+  test "passing Decimal types and floats to :decimal columns", %{conn: conn}  do
+    statement = """
+    CREATE TABLE decimals
+    (id int PRIMARY KEY,
+     decimal_from_float decimal,
+     decimal_from_decimal decimal,
+     decimal_from_fraction decimal)
+    """
+    Xandra.execute!(conn, statement, [])
+
+    statement = """
+    INSERT INTO decimals
+    (id,
+     decimal_from_float,
+     decimal_from_decimal,
+     decimal_from_fraction)
+    VALUES
+    (#{"?" |> List.duplicate(4) |> Enum.join(", ")})
+    """
+    values = [
+      {"int", 1},
+      {"decimal", 0.123456789},
+      {"decimal", Decimal.new(12.4)},
+      {"decimal", Decimal.div(Decimal.new(100), Decimal.new(3))}
+    ]
+    Xandra.execute!(conn, statement, values)
+
+    page = Xandra.execute!(conn, "SELECT * FROM decimals WHERE id = 1", [])
+    assert [row] = Enum.to_list(page)
+    assert Map.fetch!(row, "id") == 1
+    assert Map.fetch!(row, "decimal_from_float") == {123456789, -9}
+    assert Map.fetch!(row, "decimal_from_decimal") == {124, -1}
+    assert Map.fetch!(row, "decimal_from_fraction") == {3333333333333333333333333333, -26}
+  end
+
   test "user-defined types", %{conn: conn} do
     statement = """
     CREATE TYPE full_name
