@@ -608,6 +608,8 @@ defmodule Xandra.Protocol do
 
   defp decode_value(<<value::8>>, :boolean), do: Kernel.!=(value, 0)
 
+  defp decode_value(<<value::64-signed>>, :counter), do: value
+
   defp decode_value(<<value::32>>, :date), do: value
 
   defp decode_value(<<scale::32-signed, rest::bits>>, :decimal) do
