@@ -613,7 +613,14 @@ defmodule Xandra.Protocol do
   defp decode_value(<<value::32>>, :date), do: value
 
   defp decode_value(<<scale::32-signed, rest::bits>>, :decimal) do
-    {decode_value(rest, :varint), scale}
+    #{decode_value(rest, :varint), scale}
+    coef = decode_value(rest, :varint)
+    sign = 1
+    if coef < 0 do
+      sign = -1
+      coef = coef * -1
+    end
+    %Decimal{sign: sign, coef: coef, exp: scale}
   end
 
   defp decode_value(<<value::64-float>>, :double), do: value
